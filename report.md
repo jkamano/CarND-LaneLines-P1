@@ -30,30 +30,37 @@ The *draw_lane_lines()* was changed to include the following steps:
 1. **Color filtering** - For the first action, the image is filtered in such a way that only the interesting colors remain (white and yellow), the rest is blacked out.
 This is accomplished with *cv2.inRange()*  for a range close to white color and other for a range close to yellow color. Each *cv2.inRange()* returns a mask that it's bitwise ORed to have a mask including white and yellow and used to mask the original image with *cv2.bitwise_and()*.
 The color segmentation is done in HSV (Hue Saturation Value) color space where proximity of color makes more sense (as in human perspective) and segmenting colors is easier. [link](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html) 
+
 ![][image1]
 
-2. **Blur with Gaussian** - Gaussian blur to smooth image avoiding some noise in the canny edge detection 
+2. **Blur with Gaussian** - Gaussian blur to smooth image avoiding some noise in the canny edge detection
+
 ![][image2]
 
 3. **Canny Edges** - Detect regions with high gradient. Thresholds were kept as in classes, they seem to do OK.
+
 ![][image3]
 
 4. **Region of interest** - Selects the region of interest dynamically depending on image size, e.g. *extra.mp4* has different shaped frames.
+
 ![][image4]
 
-5. **Hough** - Bonds together the edge points detected by Canny, outputing line segments. Parameters were also kept as in classes, they look OK for all tested scenarios.
+5. **Hough** - Bonds together the edge points detected by Canny, outputting line segments. Parameters were also kept as in classes, they look OK for all tested scenarios.
+
 ![][image5]
 
 6. **Cluster lane marking** - The cluster lane marking is the peace of code that separates the left and right lanes. They're separated based on their slope, A line segment (output of Hough) can belong to the left lane, to the right lane or to None.
-Only lines with slope <-0.5 or >0.5 are considered, the rest are almost horizontal and, are typicaly outliers.
+Only lines with slope <-0.5 or >0.5 are considered, the rest are almost horizontal and, are typically outliers.
 Negative slope will belong to left lane and positive to right lane.
 Several methods to estimate the correct line parameters from all line segments belonging to a lane were considered.
- **Simple average of parameters**, not good, this would only work if there were no outliers, but sometimes the edge detected as a slight diferent slope for example, averaging over all gives same importance to all line segments which is a bad idea, the parameters will easialy drift away from intended value.
- **Least Squares Line fit**, since the output of Hough are points defining the segments, and the segments theoretically fall on the lane line, this method gives the line that best fits all those way points. Evend if each segment has slightly wrong slope it will be averaged out when fitting with other segments. 
+ **Simple average of parameters**, not good, this would only work if there were no outliers, but sometimes the edge detected as a slight different slope for example, averaging over all gives same importance to all line segments which is a bad idea, the parameters will easily drift away from intended value.
+ **Least Squares Line fit**, since the output of Hough are points defining the segments, and the segments theoretically fall on the lane line, this method gives the line that best fits all those way points. Even if each segment has slightly wrong slope it will be averaged out when fitting with other segments. 
 **IIR Filtering** The dashed lane lines are sometimes not detected in every frame, this would lead to unknown lane line location. Storing the previous parameters of the lane line, and making the reasonable assumption that they do not change abruptly, an IIR filter allows smoothness and robustness to frames where lines are not detected.
+
 ![][image6]
 
 7. **Merge pictures** - The end of the pipeline is just composing a picture with the original image overlayed with the estimated lines.
+
 ![][image7]
 
 ####1.2 How it got there
